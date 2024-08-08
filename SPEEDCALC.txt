@@ -1,0 +1,74 @@
+local player = game.Players.LocalPlayer
+local userInputService = game:GetService("UserInputService")
+
+
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+local speedLabel = Instance.new("TextLabel", screenGui)
+speedLabel.AnchorPoint = Vector2.new(0.5, 0.5)  
+speedLabel.Position = UDim2.new(0.5, 0, 0.3, 0)  
+speedLabel.Size = UDim2.new(0, 200, 0, 50)
+speedLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+speedLabel.BackgroundTransparency = 0.5
+speedLabel.TextColor3 = Color3.new(1, 1, 1)  
+speedLabel.Font = Enum.Font.SourceSans
+speedLabel.TextSize = 24
+speedLabel.Text = "Speed: Calculating..."
+
+
+local guiVisible = true
+userInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if not gameProcessedEvent then
+        if input.KeyCode == Enum.KeyCode.RightControl then
+            guiVisible = not guiVisible
+            screenGui.Enabled = guiVisible
+        elseif input.KeyCode == Enum.KeyCode.LeftControl then
+            screenGui:Destroy()  
+        end
+    end
+end)
+
+
+local function updateMovementSpeed(character)
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if humanoidRootPart then
+        local velocity = humanoidRootPart.Velocity
+        local speed = math.floor((velocity.X^2 + velocity.Y^2 + velocity.Z^2)^0.5 * 10 + 0.5) / 10 
+        speedLabel.Text = "Speed: " .. speed
+        
+        
+        if speed == 15.0 or speed == 15.1 or speed == 15.2 or speed == 15.3 then
+            speedLabel.TextColor3 = Color3.new(1, 0, 0)  
+        elseif speed == 14.0 or speed == 14.1 or speed == 14.2 or speed == 14.3 or speed == 14.4 then
+            speedLabel.TextColor3 = Color3.new(0, 1, 0) 
+        elseif speed == 5.0 or speed == 5.1 or speed == 5.2 or speed == 5.3 then
+            speedLabel.TextColor3 = Color3.fromRGB(255, 182, 193)  
+        else
+            speedLabel.TextColor3 = Color3.new(1, 1, 1)  
+        end
+    else
+        speedLabel.Text = "Speed: N/A"
+        speedLabel.TextColor3 = Color3.new(1, 1, 1)  
+    end
+end
+
+
+local function onCharacterAdded(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    
+    updateMovementSpeed(character)
+
+
+    game:GetService("RunService").Heartbeat:Connect(function()
+        updateMovementSpeed(character)
+    end)
+end
+
+
+player.CharacterAdded:Connect(onCharacterAdded)
+
+
+if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+    onCharacterAdded(player.Character)
+end
