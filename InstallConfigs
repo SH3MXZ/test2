@@ -1,0 +1,64 @@
+local player = game.Players.LocalPlayer
+local userInputService = game:GetService("UserInputService")
+
+-- Define speeds
+local speeds = {
+    normal = 11,
+    shift = 13.5,
+    gInPost = 9,
+    gNotInPost = 11.5,
+    f = 4.3
+}
+
+-- Function to check InPost value
+local function isInPost()
+    return player:WaitForChild("Backpack"):WaitForChild("PlayerValues"):WaitForChild("InPost").Value
+end
+
+-- Function to adjust speed
+local function adjustSpeed(humanoid)
+    local keyDown = userInputService:IsKeyDown
+    local walkSpeed = speeds.normal
+    
+    if keyDown(Enum.KeyCode.G) then
+        walkSpeed = isInPost() and speeds.gInPost or speeds.gNotInPost
+    elseif keyDown(Enum.KeyCode.F) then
+        walkSpeed = speeds.f
+    elseif keyDown(Enum.KeyCode.LeftShift) then
+        walkSpeed = speeds.shift
+    end
+    
+    humanoid.WalkSpeed = walkSpeed
+end
+
+-- Handle character respawn and initial setup
+local function onCharacterAdded(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    adjustSpeed(humanoid)
+    
+    humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+        if not adjustingSpeed then adjustSpeed(humanoid) end
+    end)
+    
+    while true do
+        wait(0.1)
+        adjustSpeed(humanoid)
+    end
+end
+
+-- Connect character respawn and handle existing character
+player.CharacterAdded:Connect(onCharacterAdded)
+if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+    onCharacterAdded(player.Character)
+end
+
+-- Listen for input changes
+local function onInputChanged(input, gameProcessed)
+    if not gameProcessed and (input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.G or input.KeyCode == Enum.KeyCode.F) then
+        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then adjustSpeed(humanoid) end
+    end
+end
+
+userInputService.InputBegan:Connect(onInputChanged)
+userInputService.InputEnded:Connect(onInputChanged)
